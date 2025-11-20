@@ -15,7 +15,7 @@ const { errorLogger, accessLogger } = require("./src/config/morganConfig");
 const responseHandler = require("./src/utils/responseHandler");
 const errorHandler = require("./src/middlewares/errorHandler");
 const { serveSwagger, setupSwagger } = require("./src/config/swagger");
-const routes = require("./src//routes");
+const routes = require("./src/routes");
 
 connectDB();
 app.use(
@@ -36,13 +36,13 @@ app.use(
 app.set("etag", "strong");
 app.use(compression());
 
+app.use(responseHandler);
+
 app.use(express.json({ limit: "5mb", strict: true }));
 app.use(express.urlencoded({ extended: false, limit: "5mb" }));
 
 app.use(errorLogger);
 app.use(accessLogger);
-
-app.use(responseHandler);
 
 app.get("/health", (req, res) => {
     return res.success({
