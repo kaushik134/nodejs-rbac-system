@@ -1,6 +1,7 @@
 const roleModel = require("../models/roleModel");
+const tokenModel = require("../models/tokenModel");
 const userModel = require("../models/userModel");
-const { generateToken } = require("../utils/common");
+const { generateToken, verifyRefreshToken } = require("../utils/common");
 const { auth, userMsg } = require("../utils/resMessage");
 const { validateWithJoi } = require("../utils/validate");
 const { registerSchema, loginSchema } = require("../utils/validations/authValidation");
@@ -113,6 +114,86 @@ exports.login = async (req, res) => {
         });
     }
 }
+
+exports.refreshToken = async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+
+        if (!refreshToken) {
+            return res.badRequest({ message: "Refresh token is required." });
+        }
+
+        const decoded = verifyRefreshToken(refreshToken);
+        if (!decoded) {
+            return res.unauthorized({ message: "Invalid or expired refresh token." });
+        }
+
+        const storedToken = await tokenModel.findOne({
+            userId: decoded.userId,
+            refreshToken: refreshToken,
+        });
+
+        if (!storedToken) {
+            return res.unauthorized({
+                message: "Refresh token invalid or logged out already.",
+            });
+        }
+
+        const user = await userModel
+            .findById(decoded.userId)
+            .populate("role", "roleName isActive accessModules");
+
+        if (!user) {
+            return res.notFound({ message: "User not found." });
+        }
+
+        if (!user.isActive) {
+            return res.forbidden({ message: "User account is inactive." });
+        }
+
+        if (!user.role.isActive) {
+            return res.forbidden({ message: "Assigned role is inactive." });
+        }
+
+        const { accessToken, refreshToken: newRefreshToken } = await generateToken({
+            userId: user._id,
+            role: user.role,
+        });
+
+        return res.success({
+            message: "Token refreshed successfully.",
+            data: { accessToken, refreshToken: newRefreshToken },
+        });
+
+    } catch (error) {
+        console.error("Refresh Token Error:", error);
+        return res.internalServerError({
+            message: "Failed to refresh token.",
+        });
+    }
+};
+
+exports.logout = async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+
+        if (!refreshToken) {
+            return res.badRequest({ message: "Refresh token is required." });
+        }
+
+        await tokenModel.findOneAndDelete({ refreshToken });
+
+        return res.success({
+            message: "Logged out successfully.",
+        });
+
+    } catch (error) {
+        console.error("Logout Error:", error);
+        return res.internalServerError({
+            message: "Failed to logout.",
+        });
+    }
+};
 
 exports.checkUserAccess = async (req, res) => {
     try {

@@ -64,6 +64,64 @@
 
 /**
  * @swagger
+ * /auth/refreshToken:
+ *   post:
+ *     summary: Refresh access & refresh tokens
+ *     description: Generates a new JWT access and refresh token using a valid refresh token.
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: "eyJhbGciOiJIUzI1NiIs..."
+ *     responses:
+ *       200:
+ *         description: New access & refresh tokens generated successfully.
+ *       400:
+ *         description: Refresh token missing.
+ *       401:
+ *         description: Invalid or expired refresh token.
+ *       403:
+ *         description: User or role inactive.
+ *       500:
+ *         description: Failed to refresh token.
+ */
+
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout user (invalidate refresh token)
+ *     description: Deletes the refresh token from DB and logs out the current session/device.
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: "eyJhbGciOiJIUzI1NiIs..."
+ *     responses:
+ *       200:
+ *         description: Logged out successfully.
+ *       400:
+ *         description: Refresh token missing.
+ *       404:
+ *         description: Already logged out or invalid refresh token.
+ *       500:
+ *         description: Failed to logout.
+ */
+
+/**
+ * @swagger
  * /auth/checkAccess:
  *   get:
  *     summary: Check access permissions of the logged-in user

@@ -3,7 +3,7 @@ const responseCode = require("../utils/responseCode");
 module.exports = (err, req, res, next) => {
     console.error("Error:", err);
 
-    if (err instanceof SyntaxError && "body" in err) {
+    if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
         return res.badRequest({
             message: "Invalid JSON format. Please check your request body.",
         });
@@ -25,7 +25,7 @@ module.exports = (err, req, res, next) => {
     }
 
     if (err.isJoi) {
-        const formatted = err.details.map(d => ({
+        const formatted = err.details.map((d) => ({
             path: d.path.join("."),
             message: d.message.replace(/['"]/g, ""),
         }));
